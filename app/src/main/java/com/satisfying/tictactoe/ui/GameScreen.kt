@@ -36,11 +36,28 @@ import com.satisfying.tictactoe.theme.SurfaceElevated
 @Composable
 fun GameScreen(
     onNavigateHome: () -> Unit,
+    onNavigateLevelSelect: () -> Unit,
+    initialGameMode: GameMode = GameMode.TWO_PLAYER,
     viewModel: GameViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val particleController = remember { ParticleController() }
     val cellPositions = remember { mutableStateMapOf<Int, Offset>() }
+    val context = androidx.compose.ui.platform.LocalContext.current
+
+    // Apply the mode chosen on the Level Select screen
+    LaunchedEffect(initialGameMode) {
+        viewModel.setGameMode(initialGameMode)
+    }
+
+    // Fire haptics when game state changes (win / draw)
+    LaunchedEffect(uiState.gameState) {
+        when (uiState.gameState) {
+            is GameState.Won -> HapticEngine.victoryRumble(context)
+            is GameState.Draw -> HapticEngine.drawPulse(context)
+            else -> {}
+        }
+    }
 
     Box(
         modifier = Modifier
@@ -68,12 +85,15 @@ fun GameScreen(
                 // Back Button
                 Text(
                     text = "< HOME",
-                    fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
-                    fontSize = 14.sp,
+                    fontFamily = FontFamily.Monospace,
+                    fontSize = 13.sp,
                     color = NeonCoral,
                     fontWeight = FontWeight.Bold,
                     letterSpacing = 2.sp,
-                    modifier = Modifier.clickable { onNavigateHome() }
+                    modifier = Modifier.clickable {
+                        HapticEngine.click(context)
+                        onNavigateHome()
+                    }
                 )
 
                 Column(horizontalAlignment = Alignment.End) {
@@ -96,15 +116,27 @@ fun GameScreen(
                 }
             }
 
-            // No Sound Toggle here anymore
+            // No inline mode selector — it lives on LevelSelectScreen now
+            Spacer(modifier = Modifier.height(4.dp))
 
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Game Mode Switcher Pills
-            GameModeSelector(
-                selectedMode = uiState.gameMode,
-                onModeSelected = { viewModel.setGameMode(it) }
-            )
+            // Change Mode shortcut
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End
+            ) {
+                Text(
+                    text = "CHANGE MODE >",
+                    fontFamily = FontFamily.Monospace,
+                    fontSize = 10.sp,
+                    color = ElectricGold.copy(alpha = 0.7f),
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 1.sp,
+                    modifier = Modifier.clickable {
+                        HapticEngine.click(context)
+                        onNavigateLevelSelect()
+                    }
+                )
+            }
 
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -127,6 +159,7 @@ fun GameScreen(
                 onCellClicked = { index ->
                     val center = cellPositions[index] ?: Offset(500f, 1000f)
                     val markColor = if (uiState.currentPlayer == Player.X) NeonCyan else NeonCoral
+                    HapticEngine.tap(context)
                     particleController.emitSparkBurst(center, markColor, count = 44)
                     viewModel.onCellClicked(index)
                 },

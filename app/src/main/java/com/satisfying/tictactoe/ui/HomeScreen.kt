@@ -14,6 +14,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.shadow
@@ -36,6 +37,7 @@ fun HomeScreen(
     onNavigateToGame: () -> Unit,
     onNavigateToSettings: () -> Unit
 ) {
+    val context = LocalContext.current
     val infiniteTransition = rememberInfiniteTransition(label = "home_anim")
 
     // Rotating rainbow hue for title
@@ -160,7 +162,10 @@ fun HomeScreen(
             // PLAY button — big, juicy, animated
             JuicyMenuButton(
                 label = "▶  PLAY NOW",
-                onClick = onNavigateToGame,
+                onClick = {
+                    HapticEngine.click(context)
+                    onNavigateToGame()
+                },
                 color = NeonCyan,
                 glowPulse = glowPulse,
                 isHero = true
@@ -170,7 +175,10 @@ fun HomeScreen(
 
             JuicyMenuButton(
                 label = "⚙  SETTINGS",
-                onClick = onNavigateToSettings,
+                onClick = {
+                    HapticEngine.click(context)
+                    onNavigateToSettings()
+                },
                 color = NeonCoral,
                 glowPulse = glowPulse * 0.6f,
                 isHero = false
