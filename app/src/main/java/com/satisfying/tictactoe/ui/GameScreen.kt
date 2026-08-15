@@ -54,12 +54,12 @@ import com.satisfying.tictactoe.theme.SurfaceElevated
 
 @Composable
 fun GameScreen(
+    onNavigateHome: () -> Unit,
     viewModel: GameViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val particleController = remember { ParticleController() }
     val cellPositions = remember { mutableStateMapOf<Int, Offset>() }
-    var isMuted by remember { mutableStateOf(SoundManager.isAudioMuted()) }
 
     Box(
         modifier = Modifier
@@ -76,7 +76,7 @@ fun GameScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.SpaceBetween
         ) {
-            // Top App Bar with Holographic Title & Sound Toggle
+            // Top App Bar with Holographic Title & Back Button
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -84,43 +84,38 @@ fun GameScreen(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Column {
+                // Back Button
+                Text(
+                    text = "< HOME",
+                    fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
+                    fontSize = 14.sp,
+                    color = NeonCoral,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 2.sp,
+                    modifier = Modifier.clickable { onNavigateHome() }
+                )
+
+                Column(horizontalAlignment = Alignment.End) {
                     Text(
                         text = "SYS.TIC_TAC_TOE",
                         fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
                         color = Color.White,
                         fontWeight = FontWeight.Black,
                         letterSpacing = 2.sp,
-                        fontSize = 18.sp
+                        fontSize = 14.sp
                     )
                     Text(
-                        text = "V.3D_HOLO_EDITION",
+                        text = "V.3D_HOLO",
                         fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
-                        fontSize = 10.sp,
+                        fontSize = 8.sp,
                         color = NeonCyan,
                         fontWeight = FontWeight.Bold,
                         letterSpacing = 2.sp
                     )
                 }
-
-                // Audio Mute Toggle Button
-                Box(
-                    modifier = Modifier
-                        .size(44.dp)
-                        .clip(CircleShape)
-                        .background(SurfaceElevated)
-                        .border(1.dp, Color(0x33FFFFFF), CircleShape)
-                        .clickable {
-                            isMuted = SoundManager.toggleMute()
-                        },
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = if (isMuted) "🔇" else "🔊",
-                        fontSize = 18.sp
-                    )
-                }
             }
+
+            // No Sound Toggle here anymore
 
             Spacer(modifier = Modifier.height(16.dp))
 
