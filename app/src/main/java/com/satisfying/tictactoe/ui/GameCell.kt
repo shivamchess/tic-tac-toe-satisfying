@@ -28,6 +28,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -108,26 +109,54 @@ fun GameCell(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .padding(6.dp)
+            .padding(8.dp)
+            // 3D Outer Drop Shadow
             .shadow(
-                elevation = if (isWinningCell) 12.dp else 4.dp,
-                shape = RoundedCornerShape(20.dp),
+                elevation = if (isWinningCell) 24.dp else 12.dp,
+                shape = RoundedCornerShape(16.dp),
                 ambientColor = if (isWinningCell) NeonCyan else Color.Black,
                 spotColor = if (isWinningCell) NeonCoral else Color.Black
             )
-            .clip(RoundedCornerShape(20.dp))
+            .clip(RoundedCornerShape(16.dp))
+            // Base Background (Dark glass)
             .background(
                 brush = Brush.verticalGradient(
-                    colors = if (isWinningCell) listOf(SurfaceElevated, SurfaceDark)
-                    else listOf(SurfaceElevated.copy(alpha = 0.8f), SurfaceDark.copy(alpha = 0.9f))
+                    colors = if (isWinningCell) listOf(Color(0xFF1F2937), Color(0xFF111827))
+                    else listOf(Color(0xEE1E293B), Color(0xEE0F172A))
                 )
             )
-            .border(
-                width = if (isWinningCell) 2.dp else 1.dp,
-                brush = if (isWinningCell) Brush.linearGradient(listOf(NeonCyan, NeonCoral))
-                else Brush.linearGradient(listOf(Color(0x334ECDC4), Color(0x11FFFFFF))),
-                shape = RoundedCornerShape(20.dp)
-            )
+            // Custom 3D Bevel via drawBehind
+            .drawBehind {
+                // Top-Left Bright Highlight
+                drawRoundRect(
+                    brush = Brush.linearGradient(
+                        colors = listOf(Color.White.copy(alpha = 0.15f), Color.Transparent),
+                        start = Offset.Zero,
+                        end = Offset(size.width, size.height)
+                    ),
+                    size = size,
+                    cornerRadius = androidx.compose.ui.geometry.CornerRadius(16.dp.toPx())
+                )
+                
+                // Bottom-Right Deep Shadow
+                drawRoundRect(
+                    brush = Brush.linearGradient(
+                        colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.6f)),
+                        start = Offset.Zero,
+                        end = Offset(size.width, size.height)
+                    ),
+                    size = size,
+                    cornerRadius = androidx.compose.ui.geometry.CornerRadius(16.dp.toPx())
+                )
+                
+                // Outer Bevel Stroke
+                drawRoundRect(
+                    color = if (isWinningCell) NeonCyan.copy(alpha = 0.5f) else Color(0x33FFFFFF),
+                    size = size,
+                    cornerRadius = androidx.compose.ui.geometry.CornerRadius(16.dp.toPx()),
+                    style = androidx.compose.ui.graphics.drawscope.Stroke(width = 1.dp.toPx())
+                )
+            }
             .onGloballyPositioned { coordinates ->
                 val pos = coordinates.positionInRoot()
                 val center = Offset(pos.x + coordinates.size.width / 2f, pos.y + coordinates.size.height / 2f)

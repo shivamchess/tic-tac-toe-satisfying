@@ -21,6 +21,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
@@ -73,33 +74,53 @@ fun GameBoard(
             }
             .aspectRatio(1f)
             .shadow(
-                elevation = 20.dp,
-                shape = RoundedCornerShape(28.dp),
-                ambientColor = NeonCyan.copy(alpha = 0.2f),
-                spotColor = NeonCoral.copy(alpha = 0.2f)
+                elevation = 32.dp,
+                shape = RoundedCornerShape(32.dp),
+                ambientColor = NeonCyan.copy(alpha = 0.4f),
+                spotColor = NeonCoral.copy(alpha = 0.4f)
             )
-            .clip(RoundedCornerShape(28.dp))
-            .background(
-                brush = Brush.radialGradient(
-                    colors = listOf(
-                        SurfaceDark,
-                        Color(0xFF07090E)
-                    )
+            .clip(RoundedCornerShape(32.dp))
+            .background(Color(0xFF05070B)) // Very dark base
+            .drawBehind {
+                // Outer Thick Metallic Bevel (simulating depth)
+                drawRoundRect(
+                    brush = Brush.linearGradient(
+                        colors = listOf(Color(0xFF334155), Color(0xFF0F172A)),
+                        start = Offset.Zero,
+                        end = Offset(size.width, size.height)
+                    ),
+                    size = size,
+                    cornerRadius = androidx.compose.ui.geometry.CornerRadius(32.dp.toPx())
                 )
-            )
-            .border(
-                width = 1.5.dp,
-                brush = Brush.sweepGradient(
-                    listOf(
-                        NeonCyan.copy(alpha = 0.4f),
-                        NeonCoral.copy(alpha = 0.4f),
-                        ElectricGold.copy(alpha = 0.4f),
-                        NeonCyan.copy(alpha = 0.4f)
-                    )
-                ),
-                shape = RoundedCornerShape(28.dp)
-            )
-            .padding(10.dp)
+                // Inner Recessed Board Area (creating a cavity for the cells)
+                drawRoundRect(
+                    brush = Brush.radialGradient(
+                        colors = listOf(Color(0xFF111827), Color(0xFF030712)),
+                        center = Offset(size.width / 2f, size.height / 2f),
+                        radius = size.width / 1.2f
+                    ),
+                    topLeft = Offset(12.dp.toPx(), 12.dp.toPx()),
+                    size = androidx.compose.ui.geometry.Size(size.width - 24.dp.toPx(), size.height - 24.dp.toPx()),
+                    cornerRadius = androidx.compose.ui.geometry.CornerRadius(24.dp.toPx())
+                )
+                // Glowing Inner Trim
+                drawRoundRect(
+                    brush = Brush.sweepGradient(
+                        colors = listOf(
+                            NeonCyan.copy(alpha = 0.6f),
+                            NeonCoral.copy(alpha = 0.6f),
+                            ElectricGold.copy(alpha = 0.6f),
+                            NeonCyan.copy(alpha = 0.6f)
+                        ),
+                        center = Offset(size.width / 2f, size.height / 2f)
+                    ),
+                    topLeft = Offset(12.dp.toPx(), 12.dp.toPx()),
+                    size = androidx.compose.ui.geometry.Size(size.width - 24.dp.toPx(), size.height - 24.dp.toPx()),
+                    cornerRadius = androidx.compose.ui.geometry.CornerRadius(24.dp.toPx()),
+                    style = androidx.compose.ui.graphics.drawscope.Stroke(width = 2.dp.toPx())
+                )
+            }
+            .padding(20.dp)
     ) {
         // Draw Cells Grid
         Column(modifier = Modifier.fillMaxSize()) {

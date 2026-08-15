@@ -64,16 +64,11 @@ fun GameScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(
-                brush = Brush.verticalGradient(
-                    colors = listOf(
-                        BackgroundDark,
-                        Color(0xFF0F1523),
-                        BackgroundDark
-                    )
-                )
-            )
+            .background(Color(0xFF02000A)) // Base dark color
     ) {
+        // 1. Synthwave 3D Background layer
+        AnimatedGridBackground()
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -81,7 +76,7 @@ fun GameScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.SpaceBetween
         ) {
-            // Top App Bar with Title & Sound Toggle
+            // Top App Bar with Holographic Title & Sound Toggle
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -91,18 +86,20 @@ fun GameScreen(
             ) {
                 Column {
                     Text(
-                        text = "TIC TAC TOE",
-                        style = MaterialTheme.typography.titleLarge,
+                        text = "SYS.TIC_TAC_TOE",
+                        fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
                         color = Color.White,
                         fontWeight = FontWeight.Black,
-                        letterSpacing = 2.sp
+                        letterSpacing = 2.sp,
+                        fontSize = 18.sp
                     )
                     Text(
-                        text = "ULTRA SATISFYING EDITION",
+                        text = "V.3D_HOLO_EDITION",
+                        fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
                         fontSize = 10.sp,
                         color = NeonCyan,
                         fontWeight = FontWeight.Bold,
-                        letterSpacing = 1.5.sp
+                        letterSpacing = 2.sp
                     )
                 }
 
@@ -177,10 +174,12 @@ fun GameScreen(
                     shape = RoundedCornerShape(12.dp)
                 ) {
                     Text(
-                        text = "Reset Scores",
+                        text = "[ SYSTEM.RESET ]",
+                        fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
                         color = Color(0xFF64748B),
-                        fontWeight = FontWeight.SemiBold,
-                        fontSize = 14.sp
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 12.sp,
+                        letterSpacing = 2.sp
                     )
                 }
             }
@@ -266,9 +265,11 @@ fun ModePill(
     ) {
         Text(
             text = label,
+            fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
             color = textColor,
             fontSize = 12.sp,
-            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
+            fontWeight = if (isSelected) FontWeight.Black else FontWeight.Bold,
+            letterSpacing = 1.sp
         )
     }
 }

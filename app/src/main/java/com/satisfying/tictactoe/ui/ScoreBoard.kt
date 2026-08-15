@@ -25,8 +25,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CutCornerShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -37,6 +37,7 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -45,8 +46,6 @@ import com.satisfying.tictactoe.Player
 import com.satisfying.tictactoe.theme.ElectricGold
 import com.satisfying.tictactoe.theme.NeonCoral
 import com.satisfying.tictactoe.theme.NeonCyan
-import com.satisfying.tictactoe.theme.SurfaceDark
-import com.satisfying.tictactoe.theme.SurfaceElevated
 
 @Composable
 fun ScoreBoard(
@@ -62,52 +61,54 @@ fun ScoreBoard(
         modifier = modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Win Streak Badge
+        // Holographic Win Streak Badge
         if (streak > 1) {
             Box(
                 modifier = Modifier
-                    .clip(RoundedCornerShape(20.dp))
-                    .background(Brush.horizontalGradient(listOf(ElectricGold.copy(alpha = 0.2f), NeonCoral.copy(alpha = 0.2f))))
-                    .border(1.dp, ElectricGold.copy(alpha = 0.6f), RoundedCornerShape(20.dp))
-                    .padding(horizontal = 14.dp, vertical = 4.dp)
+                    .clip(CutCornerShape(8.dp))
+                    .background(Color(0x44000000))
+                    .border(1.dp, Brush.horizontalGradient(listOf(ElectricGold, NeonCoral)), CutCornerShape(8.dp))
+                    .padding(horizontal = 16.dp, vertical = 6.dp)
             ) {
                 Text(
-                    text = "🔥 $streak WIN STREAK!",
+                    text = ">>> $streak WIN STREAK <<<",
                     color = ElectricGold,
                     fontWeight = FontWeight.Bold,
-                    fontSize = 12.sp
+                    fontFamily = FontFamily.Monospace,
+                    fontSize = 12.sp,
+                    letterSpacing = 2.sp
                 )
             }
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(16.dp))
         }
 
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceEvenly,
+            horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
             PlayerScoreCard(
-                playerName = "Player X",
-                mark = "X",
+                playerName = "PLAYER 1",
                 score = scoreX,
                 isActive = currentPlayer == Player.X,
                 accentColor = NeonCyan
             )
 
             Text(
-                text = "VS",
-                style = MaterialTheme.typography.titleLarge,
+                text = "// VS //",
+                fontFamily = FontFamily.Monospace,
+                fontSize = 14.sp,
                 color = Color.White.copy(alpha = 0.3f),
-                fontWeight = FontWeight.Black
+                fontWeight = FontWeight.Black,
+                letterSpacing = 3.sp
             )
 
             PlayerScoreCard(
                 playerName = when (gameMode) {
-                    GameMode.TWO_PLAYER -> "Player O"
-                    GameMode.AI_EASY -> "AI (Easy)"
-                    GameMode.AI_IMPOSSIBLE -> "AI (Boss)"
+                    GameMode.TWO_PLAYER -> "PLAYER 2"
+                    GameMode.AI_EASY -> "AI.EASY"
+                    GameMode.AI_IMPOSSIBLE -> "AI.BOSS"
                 },
-                mark = "O",
                 score = scoreO,
                 isActive = currentPlayer == Player.O,
                 accentColor = NeonCoral,
@@ -120,7 +121,6 @@ fun ScoreBoard(
 @Composable
 fun PlayerScoreCard(
     playerName: String,
-    mark: String,
     score: Int,
     isActive: Boolean,
     accentColor: Color,
@@ -128,69 +128,51 @@ fun PlayerScoreCard(
 ) {
     val infiniteTransition = rememberInfiniteTransition(label = "pulse")
     val glowAlpha by infiniteTransition.animateFloat(
-        initialValue = 0.4f,
-        targetValue = 0.95f,
+        initialValue = 0.2f,
+        targetValue = 0.8f,
         animationSpec = infiniteRepeatable(
-            animation = tween(600, easing = FastOutSlowInEasing),
+            animation = tween(800, easing = FastOutSlowInEasing),
             repeatMode = RepeatMode.Reverse
         ),
         label = "glow"
     )
 
-    val scale by infiniteTransition.animateFloat(
-        initialValue = 1f,
-        targetValue = if (isActive) 1.04f else 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(700, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "scale"
-    )
-
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
-            .graphicsLayer {
-                if (isActive) {
-                    scaleX = scale
-                    scaleY = scale
-                }
-            }
-            .width(135.dp)
+            .width(130.dp)
             .shadow(
-                elevation = if (isActive) 14.dp else 4.dp,
-                shape = RoundedCornerShape(22.dp),
+                elevation = if (isActive) 12.dp else 0.dp,
+                shape = CutCornerShape(12.dp),
                 ambientColor = if (isActive) accentColor else Color.Transparent,
                 spotColor = if (isActive) accentColor else Color.Transparent
             )
-            .clip(RoundedCornerShape(22.dp))
+            .clip(CutCornerShape(12.dp))
             .background(
                 brush = Brush.verticalGradient(
-                    colors = if (isActive) listOf(
-                        SurfaceElevated,
-                        accentColor.copy(alpha = 0.15f)
-                    ) else listOf(
-                        SurfaceDark,
-                        Color(0xFF0B0E14)
-                    )
+                    colors = if (isActive) listOf(Color(0x66000000), accentColor.copy(alpha = 0.15f))
+                    else listOf(Color(0x33000000), Color(0x33000000))
                 )
             )
             .border(
-                width = if (isActive) 1.8.dp else 1.dp,
+                width = 1.dp,
                 color = if (isActive) accentColor.copy(alpha = glowAlpha) else Color(0x22FFFFFF),
-                shape = RoundedCornerShape(22.dp)
+                shape = CutCornerShape(12.dp)
             )
-            .padding(vertical = 12.dp, horizontal = 8.dp)
+            .padding(vertical = 12.dp, horizontal = 4.dp)
     ) {
+        // Techy Status Label
         Text(
-            text = if (isThinking) "Thinking..." else playerName,
-            style = MaterialTheme.typography.labelLarge,
-            color = if (isActive) accentColor else Color(0xFF94A3B8),
+            text = if (isThinking) "> COMPUTING..." else "> $playerName",
+            fontFamily = FontFamily.Monospace,
+            fontSize = 11.sp,
+            color = if (isActive) accentColor else Color.White.copy(alpha = 0.5f),
             fontWeight = FontWeight.Bold,
+            letterSpacing = 1.sp,
             maxLines = 1
         )
 
-        Spacer(modifier = Modifier.height(4.dp))
+        Spacer(modifier = Modifier.height(8.dp))
 
         AnimatedContent(
             targetState = score,
@@ -202,21 +184,31 @@ fun PlayerScoreCard(
             label = "scoreRoll"
         ) { targetScore ->
             Text(
-                text = targetScore.toString(),
-                style = MaterialTheme.typography.displayLarge.copy(fontSize = 42.sp),
-                color = Color.White,
-                fontWeight = FontWeight.ExtraBold
+                text = targetScore.toString().padStart(2, '0'),
+                fontFamily = FontFamily.Monospace,
+                fontSize = 38.sp,
+                color = if (isActive) Color.White else Color.White.copy(alpha = 0.5f),
+                fontWeight = FontWeight.ExtraBold,
+                letterSpacing = 4.sp
             )
         }
 
         Spacer(modifier = Modifier.height(4.dp))
 
-        // Active Turn Glowing indicator
-        Box(
-            modifier = Modifier
-                .size(width = 30.dp, height = 4.dp)
-                .clip(RoundedCornerShape(50))
-                .background(if (isActive) accentColor.copy(alpha = glowAlpha) else Color.Transparent)
-        )
+        // Active Turn Glowing indicator (Scanning line style)
+        if (isActive) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth(0.6f)
+                    .height(2.dp)
+                    .background(
+                        brush = Brush.horizontalGradient(
+                            colors = listOf(Color.Transparent, accentColor, Color.Transparent)
+                        )
+                    )
+            )
+        } else {
+            Box(modifier = Modifier.height(2.dp))
+        }
     }
 }
