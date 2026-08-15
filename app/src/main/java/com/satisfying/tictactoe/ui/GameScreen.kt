@@ -82,55 +82,39 @@ fun GameScreen(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Back Button
+                // Back to home
                 Text(
-                    text = "< HOME",
-                    fontFamily = FontFamily.Monospace,
-                    fontSize = 13.sp,
-                    color = NeonCoral,
-                    fontWeight = FontWeight.Bold,
-                    letterSpacing = 2.sp,
-                    modifier = Modifier.clickable {
-                        HapticEngine.click(context)
-                        onNavigateHome()
-                    }
+                    text = "←",
+                    fontSize = 24.sp,
+                    color = Color.White.copy(alpha = 0.6f),
+                    modifier = Modifier
+                        .padding(4.dp)
+                        .clickable {
+                            HapticEngine.click(context)
+                            onNavigateHome()
+                        }
                 )
 
-                Column(horizontalAlignment = Alignment.End) {
-                    Text(
-                        text = "SYS.TIC_TAC_TOE",
-                        fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
-                        color = Color.White,
-                        fontWeight = FontWeight.Black,
-                        letterSpacing = 2.sp,
-                        fontSize = 14.sp
-                    )
-                    Text(
-                        text = "V.3D_HOLO",
-                        fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
-                        fontSize = 8.sp,
-                        color = NeonCyan,
-                        fontWeight = FontWeight.Bold,
-                        letterSpacing = 2.sp
-                    )
-                }
+                Text(
+                    text = "Tic Tac Toe",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Black,
+                    color = Color.White
+                )
             }
 
-            // No inline mode selector — it lives on LevelSelectScreen now
             Spacer(modifier = Modifier.height(4.dp))
 
-            // Change Mode shortcut
+            // Quick mode switcher
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.End
             ) {
                 Text(
-                    text = "CHANGE MODE >",
-                    fontFamily = FontFamily.Monospace,
-                    fontSize = 10.sp,
-                    color = ElectricGold.copy(alpha = 0.7f),
-                    fontWeight = FontWeight.Bold,
-                    letterSpacing = 1.sp,
+                    text = "Change mode  ›",
+                    fontSize = 12.sp,
+                    color = ElectricGold.copy(alpha = 0.65f),
+                    fontWeight = FontWeight.Medium,
                     modifier = Modifier.clickable {
                         HapticEngine.click(context)
                         onNavigateLevelSelect()
@@ -183,12 +167,10 @@ fun GameScreen(
                     shape = RoundedCornerShape(12.dp)
                 ) {
                     Text(
-                        text = "[ SYSTEM.RESET ]",
-                        fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
-                        color = Color(0xFF64748B),
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 12.sp,
-                        letterSpacing = 2.sp
+                        text = "Reset Scores",
+                        color = Color.White.copy(alpha = 0.25f),
+                        fontWeight = FontWeight.Medium,
+                        fontSize = 13.sp
                     )
                 }
             }

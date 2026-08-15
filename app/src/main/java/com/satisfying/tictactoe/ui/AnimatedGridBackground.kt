@@ -1,104 +1,87 @@
 package com.satisfying.tictactoe.ui
 
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import com.satisfying.tictactoe.theme.NeonCyan
+import kotlin.math.cos
+import kotlin.math.sin
+import kotlin.random.Random
+
+private data class Star(
+    val x: Float,
+    val y: Float,
+    val radius: Float,
+    val speed: Float,
+    val phase: Float
+)
 
 @Composable
 fun AnimatedGridBackground(modifier: Modifier = Modifier) {
-    val infiniteTransition = rememberInfiniteTransition(label = "grid_transition")
-    val gridOffset by infiniteTransition.animateFloat(
+    // Generate stars once
+    val stars = remember {
+        (0 until 80).map {
+            Star(
+                x = Random.nextFloat(),
+                y = Random.nextFloat(),
+                radius = Random.nextFloat() * 2.2f + 0.4f,
+                speed = Random.nextFloat() * 0.4f + 0.1f,
+                phase = Random.nextFloat() * 2f * Math.PI.toFloat()
+            )
+        }
+    }
+
+    val infiniteTransition = rememberInfiniteTransition(label = "stars")
+    val time by infiniteTransition.animateFloat(
         initialValue = 0f,
-        targetValue = 1f,
+        targetValue = (2 * Math.PI).toFloat(),
         animationSpec = infiniteRepeatable(
-            animation = tween(2000, easing = LinearEasing),
+            animation = tween(12000, easing = LinearEasing),
             repeatMode = RepeatMode.Restart
         ),
-        label = "grid_offset"
+        label = "time"
     )
 
     Canvas(modifier = modifier.fillMaxSize()) {
-        val width = size.width
-        val height = size.height
-
-        // Horizon line is 30% from the top
-        val horizonY = height * 0.3f
-        
-        // Draw deep space background with subtle gradient
+        // Rich deep background gradient — feels warm, not cold AI-blue
         drawRect(
-            brush = Brush.verticalGradient(
+            brush = Brush.radialGradient(
                 colors = listOf(
-                    Color(0xFF02000A), // Deep void
-                    Color(0xFF0F0529), // Dark purple
-                    Color(0xFF02000A)
+                    Color(0xFF0E0C1A), // warm dark purple at center
+                    Color(0xFF07080F)  // near-black at edges
                 ),
-                startY = 0f,
-                endY = height
+                center = Offset(size.width * 0.5f, size.height * 0.3f),
+                radius = size.width * 0.9f
             )
         )
 
-        // Draw a glowing sun/horizon
+        // Subtle bottom glow — makes the board area feel lit from below
         drawRect(
             brush = Brush.verticalGradient(
                 colors = listOf(
-                    NeonCyan.copy(alpha = 0.0f),
-                    NeonCyan.copy(alpha = 0.15f),
-                    NeonCyan.copy(alpha = 0.0f)
+                    Color.Transparent,
+                    Color(0xFF7C5CFC).copy(alpha = 0.04f),
+                    Color(0xFF7C5CFC).copy(alpha = 0.08f)
                 ),
-                startY = horizonY - 100f,
-                endY = horizonY + 50f
-            ),
-            topLeft = Offset(0f, horizonY - 100f),
-            size = androidx.compose.ui.geometry.Size(width, 150f)
+                startY = size.height * 0.6f,
+                endY = size.height
+            )
         )
 
-        val gridColor = NeonCyan.copy(alpha = 0.3f)
-        val center = width / 2f
-        val numVerticalLines = 14
-        val spread = width * 2.5f
-
-        // Draw Perspective Vertical Lines
-        for (i in -numVerticalLines..numVerticalLines) {
-            val startX = center
-            val endX = center + (i * (spread / numVerticalLines))
-            
-            drawLine(
-                color = gridColor,
-                start = Offset(startX, horizonY),
-                end = Offset(endX, height),
-                strokeWidth = 2f
+        // Slowly pulsing soft stars
+        stars.forEach { star ->
+            val pulse = (sin(time * star.speed + star.phase) * 0.5f + 0.5f)
+            val alpha = (0.1f + pulse * 0.5f).coerceIn(0f, 0.6f)
+            val radius = star.radius * (0.8f + pulse * 0.4f)
+            drawCircle(
+                color = Color.White.copy(alpha = alpha),
+                radius = radius,
+                center = Offset(star.x * size.width, star.y * size.height)
             )
-        }
-
-        // Draw Perspective Horizontal Lines moving towards camera
-        val numHorizontalLines = 15
-        for (i in 0..numHorizontalLines) {
-            val virtualIndex = i + gridOffset
-            val progress = virtualIndex / numHorizontalLines
-            val perspectiveProgress = progress * progress * progress
-            val y = horizonY + (height - horizonY) * perspectiveProgress
-            val alpha = (perspectiveProgress * 1.5f).coerceIn(0f, 0.4f)
-            
-            if (y > horizonY && y < height) {
-                drawLine(
-                    color = NeonCyan.copy(alpha = alpha),
-                    start = Offset(0f, y),
-                    end = Offset(width, y),
-                    strokeWidth = 1f + (perspectiveProgress * 3f)
-                )
-            }
         }
     }
 }
