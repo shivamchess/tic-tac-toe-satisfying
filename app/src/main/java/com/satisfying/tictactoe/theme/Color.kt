@@ -2,15 +2,22 @@ package com.satisfying.tictactoe.theme
 
 import androidx.compose.ui.graphics.Color
 
-val NavyDark = Color(0xFF0A0E1A)
-val NavyMedium = Color(0xFF141C30)
-val NavyLight = Color(0xFF2A3A5C)
+// Deep Space Neon Dark Theme Palette
+val BackgroundDark = Color(0xFF090B10)
+val SurfaceDark = Color(0xFF121824)
+val SurfaceElevated = Color(0xFF1C2538)
+val SurfaceBorder = Color(0x334ECDC4)
 
-val NavyDarkest = Color(0xFF05070D)
+// Player Mark Colors with Neon Punch
+val NeonCyan = Color(0xFF00F5D4)
+val NeonCyanGlow = Color(0x6600F5D4)
 
-val Coral = Color(0xFFFF6B6B)
-val Mint = Color(0xFF4ECDC4)
-val Gold = Color(0xFFFFD166)
+val NeonCoral = Color(0xFFFF3366)
+val NeonCoralGlow = Color(0x66FF3366)
 
-val TextWhite = Color(0xFFF0F2F5)
-val TextGray = Color(0xFFA0ABBA)
+val ElectricGold = Color(0xFFFFD166)
+val ElectricPurple = Color(0xFF9D4EDD)
+
+val TextPrimary = Color(0xFFF8FAFC)
+val TextSecondary = Color(0xFF94A3B8)
+val TextMuted = Color(0xFF475569)

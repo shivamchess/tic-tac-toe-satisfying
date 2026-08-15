@@ -1,78 +1,274 @@
 package com.satisfying.tictactoe.ui
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateMapOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.satisfying.tictactoe.GameMode
 import com.satisfying.tictactoe.GameState
 import com.satisfying.tictactoe.GameViewModel
+import com.satisfying.tictactoe.Player
+import com.satisfying.tictactoe.audio.SoundManager
+import com.satisfying.tictactoe.theme.BackgroundDark
+import com.satisfying.tictactoe.theme.ElectricGold
+import com.satisfying.tictactoe.theme.NeonCoral
+import com.satisfying.tictactoe.theme.NeonCyan
+import com.satisfying.tictactoe.theme.SurfaceDark
+import com.satisfying.tictactoe.theme.SurfaceElevated
 
 @Composable
 fun GameScreen(
     viewModel: GameViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val particleController = remember { ParticleController() }
+    val cellPositions = remember { mutableStateMapOf<Int, Offset>() }
+    var isMuted by remember { mutableStateOf(SoundManager.isAudioMuted()) }
 
-    Box(modifier = Modifier.fillMaxSize()) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(
+                brush = Brush.verticalGradient(
+                    colors = listOf(
+                        BackgroundDark,
+                        Color(0xFF0F1523),
+                        BackgroundDark
+                    )
+                )
+            )
+    ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(24.dp),
+                .padding(horizontal = 20.dp, vertical = 24.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.SpaceBetween
         ) {
-            Spacer(modifier = Modifier.height(32.dp))
+            // Top App Bar with Title & Sound Toggle
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 12.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column {
+                    Text(
+                        text = "TIC TAC TOE",
+                        style = MaterialTheme.typography.titleLarge,
+                        color = Color.White,
+                        fontWeight = FontWeight.Black,
+                        letterSpacing = 2.sp
+                    )
+                    Text(
+                        text = "ULTRA SATISFYING EDITION",
+                        fontSize = 10.sp,
+                        color = NeonCyan,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 1.5.sp
+                    )
+                }
 
-            // Header & Score
+                // Audio Mute Toggle Button
+                Box(
+                    modifier = Modifier
+                        .size(44.dp)
+                        .clip(CircleShape)
+                        .background(SurfaceElevated)
+                        .border(1.dp, Color(0x33FFFFFF), CircleShape)
+                        .clickable {
+                            isMuted = SoundManager.toggleMute()
+                        },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = if (isMuted) "🔇" else "🔊",
+                        fontSize = 18.sp
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Game Mode Switcher Pills
+            GameModeSelector(
+                selectedMode = uiState.gameMode,
+                onModeSelected = { viewModel.setGameMode(it) }
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Dynamic ScoreBoard
             ScoreBoard(
                 scoreX = uiState.scoreX,
                 scoreO = uiState.scoreO,
-                currentPlayer = uiState.currentPlayer
+                streak = uiState.streak,
+                currentPlayer = uiState.currentPlayer,
+                gameMode = uiState.gameMode,
+                isAiThinking = uiState.isThinkingAI
             )
 
-            Spacer(modifier = Modifier.height(48.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
-            // Main Board
+            // The Juicy Neon GameBoard
             GameBoard(
                 board = uiState.board,
                 winResult = (uiState.gameState as? GameState.Won)?.result,
-                onCellClicked = viewModel::onCellClicked,
+                onCellClicked = { index ->
+                    val center = cellPositions[index] ?: Offset(500f, 1000f)
+                    val markColor = if (uiState.currentPlayer == Player.X) NeonCyan else NeonCoral
+                    particleController.emitSparkBurst(center, markColor, count = 28)
+                    viewModel.onCellClicked(index)
+                },
+                onCellPositioned = { index, offset ->
+                    cellPositions[index] = offset
+                },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(16.dp)
+                    .padding(horizontal = 8.dp)
             )
 
-            Spacer(modifier = Modifier.weight(1f))
-
-            // Reset Scores Button
-            TextButton(onClick = viewModel::resetScores) {
-                Text(
-                    text = "Reset Scores",
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-            
             Spacer(modifier = Modifier.height(16.dp))
+
+            // Bottom Actions (Reset Scores)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center
+            ) {
+                TextButton(
+                    onClick = viewModel::resetScores,
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Text(
+                        text = "Reset Scores",
+                        color = Color(0xFF64748B),
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 14.sp
+                    )
+                }
+            }
         }
 
-        // Overlay for Win/Draw
+        // 60FPS Particle Layer
+        ParticleHost(controller = particleController)
+
+        // Celebratory Winner Overlay
         WinnerOverlay(
             gameState = uiState.gameState,
-            onPlayAgain = viewModel::playAgain
+            onPlayAgain = viewModel::playAgain,
+            particleController = particleController
+        )
+    }
+}
+
+@Composable
+fun GameModeSelector(
+    selectedMode: GameMode,
+    onModeSelected: (GameMode) -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .background(SurfaceDark)
+            .border(1.dp, Color(0x22FFFFFF), RoundedCornerShape(16.dp))
+            .padding(4.dp),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        ModePill(
+            label = "Vs Friend",
+            isSelected = selectedMode == GameMode.TWO_PLAYER,
+            onClick = { onModeSelected(GameMode.TWO_PLAYER) },
+            modifier = Modifier.weight(1f)
+        )
+        ModePill(
+            label = "AI (Easy)",
+            isSelected = selectedMode == GameMode.AI_EASY,
+            onClick = { onModeSelected(GameMode.AI_EASY) },
+            modifier = Modifier.weight(1f)
+        )
+        ModePill(
+            label = "AI (Boss)",
+            isSelected = selectedMode == GameMode.AI_IMPOSSIBLE,
+            onClick = { onModeSelected(GameMode.AI_IMPOSSIBLE) },
+            modifier = Modifier.weight(1f)
+        )
+    }
+}
+
+@Composable
+fun ModePill(
+    label: String,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val bgColor by animateColorAsState(
+        targetValue = if (isSelected) SurfaceElevated else Color.Transparent,
+        animationSpec = tween(200),
+        label = "pillBg"
+    )
+    val textColor by animateColorAsState(
+        targetValue = if (isSelected) NeonCyan else Color(0xFF94A3B8),
+        animationSpec = tween(200),
+        label = "pillText"
+    )
+
+    Box(
+        modifier = modifier
+            .clip(RoundedCornerShape(12.dp))
+            .background(bgColor)
+            .border(
+                width = if (isSelected) 1.dp else 0.dp,
+                color = if (isSelected) NeonCyan.copy(alpha = 0.5f) else Color.Transparent,
+                shape = RoundedCornerShape(12.dp)
+            )
+            .clickable(onClick = onClick)
+            .padding(vertical = 8.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = label,
+            color = textColor,
+            fontSize = 12.sp,
+            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
         )
     }
 }
