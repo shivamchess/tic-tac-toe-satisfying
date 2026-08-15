@@ -1,41 +1,24 @@
 package com.satisfying.tictactoe.ui
 
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CutCornerShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateMapOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -44,8 +27,6 @@ import com.satisfying.tictactoe.GameMode
 import com.satisfying.tictactoe.GameState
 import com.satisfying.tictactoe.GameViewModel
 import com.satisfying.tictactoe.Player
-import com.satisfying.tictactoe.audio.SoundManager
-import com.satisfying.tictactoe.theme.BackgroundDark
 import com.satisfying.tictactoe.theme.ElectricGold
 import com.satisfying.tictactoe.theme.NeonCoral
 import com.satisfying.tictactoe.theme.NeonCyan
@@ -146,7 +127,7 @@ fun GameScreen(
                 onCellClicked = { index ->
                     val center = cellPositions[index] ?: Offset(500f, 1000f)
                     val markColor = if (uiState.currentPlayer == Player.X) NeonCyan else NeonCoral
-                    particleController.emitSparkBurst(center, markColor, count = 28)
+                    particleController.emitSparkBurst(center, markColor, count = 44)
                     viewModel.onCellClicked(index)
                 },
                 onCellPositioned = { index, offset ->
@@ -200,26 +181,26 @@ fun GameModeSelector(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
-            .background(SurfaceDark)
-            .border(1.dp, Color(0x22FFFFFF), RoundedCornerShape(16.dp))
-            .padding(4.dp),
+            .clip(CutCornerShape(12.dp))
+            .background(Color(0xFF0D1117))
+            .border(1.dp, Color(0x33FFFFFF), CutCornerShape(12.dp))
+            .padding(5.dp),
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         ModePill(
-            label = "Vs Friend",
+            label = "👥 2P",
             isSelected = selectedMode == GameMode.TWO_PLAYER,
             onClick = { onModeSelected(GameMode.TWO_PLAYER) },
             modifier = Modifier.weight(1f)
         )
         ModePill(
-            label = "AI (Easy)",
+            label = "🤖 EASY",
             isSelected = selectedMode == GameMode.AI_EASY,
             onClick = { onModeSelected(GameMode.AI_EASY) },
             modifier = Modifier.weight(1f)
         )
         ModePill(
-            label = "AI (Boss)",
+            label = "💀 BOSS",
             isSelected = selectedMode == GameMode.AI_IMPOSSIBLE,
             onClick = { onModeSelected(GameMode.AI_IMPOSSIBLE) },
             modifier = Modifier.weight(1f)
@@ -234,35 +215,45 @@ fun ModePill(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val infiniteTransition = rememberInfiniteTransition(label = "pill")
+    val selectedGlow by infiniteTransition.animateFloat(
+        initialValue = 0.4f, targetValue = 1f,
+        animationSpec = infiniteRepeatable(tween(700, easing = FastOutSlowInEasing), RepeatMode.Reverse),
+        label = "pillGlow"
+    )
     val bgColor by animateColorAsState(
-        targetValue = if (isSelected) SurfaceElevated else Color.Transparent,
-        animationSpec = tween(200),
-        label = "pillBg"
+        targetValue = if (isSelected) NeonCyan.copy(alpha = 0.18f) else Color.Transparent,
+        animationSpec = tween(200), label = "pillBg"
     )
     val textColor by animateColorAsState(
         targetValue = if (isSelected) NeonCyan else Color(0xFF94A3B8),
-        animationSpec = tween(200),
-        label = "pillText"
+        animationSpec = tween(200), label = "pillText"
+    )
+    val pillScale by animateFloatAsState(
+        targetValue = if (isSelected) 1.05f else 1f,
+        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy),
+        label = "pillScale"
     )
 
     Box(
         modifier = modifier
-            .clip(RoundedCornerShape(12.dp))
+            .graphicsLayer { scaleX = pillScale; scaleY = pillScale }
+            .clip(CutCornerShape(8.dp))
             .background(bgColor)
             .border(
-                width = if (isSelected) 1.dp else 0.dp,
-                color = if (isSelected) NeonCyan.copy(alpha = 0.5f) else Color.Transparent,
-                shape = RoundedCornerShape(12.dp)
+                width = if (isSelected) 1.5.dp else 0.5.dp,
+                color = if (isSelected) NeonCyan.copy(alpha = selectedGlow) else Color(0x22FFFFFF),
+                shape = CutCornerShape(8.dp)
             )
             .clickable(onClick = onClick)
-            .padding(vertical = 8.dp),
+            .padding(vertical = 10.dp),
         contentAlignment = Alignment.Center
     ) {
         Text(
             text = label,
-            fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
+            fontFamily = FontFamily.Monospace,
             color = textColor,
-            fontSize = 12.sp,
+            fontSize = 11.sp,
             fontWeight = if (isSelected) FontWeight.Black else FontWeight.Bold,
             letterSpacing = 1.sp
         )

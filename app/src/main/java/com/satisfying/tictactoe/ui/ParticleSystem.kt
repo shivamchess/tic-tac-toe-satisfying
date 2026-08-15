@@ -10,7 +10,9 @@ import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.drawscope.rotate
 import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.random.Random
@@ -25,17 +27,18 @@ data class Particle(
     var alpha: Float = 1f,
     val lifeDecay: Float = Random.nextFloat() * 0.02f + 0.015f,
     val isConfetti: Boolean = false,
-    var rotation: Float = 0f,
-    var rotationSpeed: Float = (Random.nextFloat() - 0.5f) * 15f
+    val isStar: Boolean = false,
+    var rotation: Float = Random.nextFloat() * 360f,
+    var rotationSpeed: Float = (Random.nextFloat() - 0.5f) * 20f
 )
 
 class ParticleController {
     val particles = mutableStateListOf<Particle>()
 
-    fun emitSparkBurst(center: Offset, color: Color, count: Int = 24) {
+    fun emitSparkBurst(center: Offset, color: Color, count: Int = 32) {
         for (i in 0 until count) {
-            val angle = Random.nextFloat() * 2f * Math.PI.toFloat()
-            val speed = Random.nextFloat() * 12f + 4f
+            val angle = (i.toFloat() / count) * 2f * Math.PI.toFloat() + Random.nextFloat() * 0.5f
+            val speed = Random.nextFloat() * 14f + 6f
             particles.add(
                 Particle(
                     x = center.x,
@@ -43,36 +46,57 @@ class ParticleController {
                     vx = cos(angle) * speed,
                     vy = sin(angle) * speed,
                     color = color,
-                    radius = Random.nextFloat() * 6f + 4f,
-                    lifeDecay = Random.nextFloat() * 0.03f + 0.02f
+                    radius = Random.nextFloat() * 7f + 5f,
+                    lifeDecay = Random.nextFloat() * 0.025f + 0.018f
+                )
+            )
+        }
+        // Extra fast tiny sparks for detail
+        for (i in 0 until 12) {
+            val angle = Random.nextFloat() * 2f * Math.PI.toFloat()
+            val speed = Random.nextFloat() * 22f + 10f
+            particles.add(
+                Particle(
+                    x = center.x,
+                    y = center.y,
+                    vx = cos(angle) * speed,
+                    vy = sin(angle) * speed,
+                    color = Color.White,
+                    radius = Random.nextFloat() * 3f + 2f,
+                    lifeDecay = Random.nextFloat() * 0.04f + 0.03f
                 )
             )
         }
     }
 
-    fun emitConfettiStorm(width: Float, height: Float, count: Int = 70) {
+    fun emitConfettiStorm(width: Float, height: Float, count: Int = 200) {
         val colors = listOf(
             Color(0xFF00F5D4), // Bright Teal
             Color(0xFFFF007F), // Neon Pink
             Color(0xFFFFD166), // Gold
             Color(0xFF7000FF), // Electric Purple
-            Color(0xFF00BBF9)  // Sky Blue
+            Color(0xFF00BBF9), // Sky Blue
+            Color(0xFFFF4F00), // Orange
+            Color(0xFF39FF14), // Neon Green
+            Color.White
         )
         for (i in 0 until count) {
             val startX = Random.nextFloat() * width
-            val startY = Random.nextFloat() * (height * 0.3f)
-            val angle = (Random.nextFloat() * 0.8f + 0.1f) * Math.PI.toFloat() // downward spray
-            val speed = Random.nextFloat() * 14f + 6f
+            val startY = -Random.nextFloat() * height * 0.3f // start above screen
+            val vx = (Random.nextFloat() - 0.5f) * 10f
+            val vy = Random.nextFloat() * 10f + 5f
+            val useStar = Random.nextBoolean()
             particles.add(
                 Particle(
                     x = startX,
                     y = startY,
-                    vx = cos(angle) * speed * (if (Random.nextBoolean()) 1f else -1f),
-                    vy = sin(angle) * speed + 4f,
+                    vx = vx,
+                    vy = vy,
                     color = colors.random(),
-                    radius = Random.nextFloat() * 8f + 6f,
-                    lifeDecay = Random.nextFloat() * 0.008f + 0.006f,
-                    isConfetti = true
+                    radius = Random.nextFloat() * 9f + 5f,
+                    lifeDecay = Random.nextFloat() * 0.006f + 0.004f,
+                    isConfetti = !useStar,
+                    isStar = useStar
                 )
             )
         }
@@ -84,8 +108,9 @@ class ParticleController {
             val p = iterator.next()
             p.x += p.vx
             p.y += p.vy
-            p.vy += if (p.isConfetti) 0.3f else 0.15f // gravity
-            p.vx *= 0.96f // drag
+            p.vy += if (p.isConfetti || p.isStar) 0.25f else 0.18f // gravity
+            p.vx *= 0.97f // drag
+            p.vy *= 0.995f
             p.alpha -= p.lifeDecay
             p.rotation += p.rotationSpeed
 
@@ -120,25 +145,54 @@ fun ParticleHost(
 
 private fun DrawScope.drawParticle(p: Particle) {
     val particleColor = p.color.copy(alpha = p.alpha.coerceIn(0f, 1f))
-    if (p.isConfetti) {
-        // Draw spinning rectangular confetti
-        val size = p.radius * 2f
-        drawCircle(
-            color = particleColor,
-            radius = p.radius,
-            center = Offset(p.x, p.y)
-        )
-    } else {
-        // Glowing radial spark
-        drawCircle(
-            color = particleColor.copy(alpha = (p.alpha * 0.3f).coerceIn(0f, 1f)),
-            radius = p.radius * 2.2f,
-            center = Offset(p.x, p.y)
-        )
-        drawCircle(
-            color = particleColor,
-            radius = p.radius,
-            center = Offset(p.x, p.y)
-        )
+    when {
+        p.isStar -> {
+            // Draw spinning 4-pointed star
+            rotate(p.rotation, pivot = Offset(p.x, p.y)) {
+                val r = p.radius
+                val innerR = r * 0.4f
+                val points = 4
+                val path = Path()
+                for (i in 0 until points * 2) {
+                    val angle = (i * Math.PI / points - Math.PI / 2).toFloat()
+                    val radius = if (i % 2 == 0) r else innerR
+                    val px = p.x + cos(angle) * radius
+                    val py = p.y + sin(angle) * radius
+                    if (i == 0) path.moveTo(px, py) else path.lineTo(px, py)
+                }
+                path.close()
+                drawPath(path, color = particleColor)
+                drawPath(path, color = Color.White.copy(alpha = p.alpha * 0.4f),
+                    style = androidx.compose.ui.graphics.drawscope.Stroke(width = 1.5f))
+            }
+        }
+        p.isConfetti -> {
+            // Spinning rectangle confetti
+            rotate(p.rotation, pivot = Offset(p.x, p.y)) {
+                drawRect(
+                    color = particleColor,
+                    topLeft = Offset(p.x - p.radius, p.y - p.radius * 0.5f),
+                    size = androidx.compose.ui.geometry.Size(p.radius * 2f, p.radius)
+                )
+            }
+        }
+        else -> {
+            // Glowing radial spark with hot white core
+            drawCircle(
+                color = particleColor.copy(alpha = (p.alpha * 0.25f).coerceIn(0f, 1f)),
+                radius = p.radius * 3f,
+                center = Offset(p.x, p.y)
+            )
+            drawCircle(
+                color = particleColor,
+                radius = p.radius,
+                center = Offset(p.x, p.y)
+            )
+            drawCircle(
+                color = Color.White.copy(alpha = p.alpha * 0.8f),
+                radius = p.radius * 0.4f,
+                center = Offset(p.x, p.y)
+            )
+        }
     }
 }
